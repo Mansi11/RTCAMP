@@ -9,16 +9,26 @@
         define('ACCESS_SECRET','3Gdt0fIYTw1fPALbJXYPRojHioIQdCDk0FKgI9AGz71d4');
         define('OAUTH_CALLBACK','https://mansishah3883.000webhostapp.com/callback.php');
 
-        $connection = new TwitterOAuth(CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_SECRET);
+        if(!isset($_SESSION['access_token'])){
+          header('location:index.php');
+        }
+        $access_token = $_SESSION['access_token'];
+
+        $connection=new TwitterOAuth(CONSUMER_KEY,CONSUMER_SECRET,$access_token['oauth_token'],$access_token['oauth_token_secret']);
+        //var_dump($user);
 
         $user=$connection->get("account/verify_credentials");
+
         $profiles = array();
+
+        // Get Followers List
         $ids = $connection->get('followers/list');
         $list= json_decode(json_encode($ids), true);
         $list=$list['users'];
         $length_user=count($list);
         $json=json_encode($list);
 
+        //Get User Tweets
         $limit=10;
         $tweets = $connection->get("statuses/user_timeline", array('count' => $limit, 'exclude_replies' => true, 'screen_name' => $user->screen_name));
         $tweets= json_decode(json_encode($tweets), true);
@@ -106,6 +116,7 @@
 
   <?php
   $i=0;
+
   foreach($list as $arr)
   {
     if($i>9)
@@ -197,12 +208,12 @@
 
     <script>
       $(document).ready(function(){
+        var user;
+      user= <?php echo $json; ?>;
 
-      var user= <?php echo $json; ?>;
-              //alert(user[0].name);
         $('.follower').on('click', function(e){
         var id = $(this).attr('data-value');
-//alert(id);
+
          $.ajax({
            url:'getFollowers.php?id='+id,
            dataType:'json',
@@ -251,7 +262,7 @@
 
       $('.sear').on('input', function(e){
         var text=$(this).val();
-              var pattern=new RegExp('^.*'+text+'.*$','i');
+        var pattern=new RegExp('^.*'+text+'.*$','i');
         var length_followers=user.length;
         var i=0;
         var array = [];
@@ -275,7 +286,7 @@ var t='';
 
         $(document.body).on('click','.follower123',function(){
           var id = $(this).attr('data-value');
-  //alert(id);
+
            $.ajax({
              url:'getFollowers.php?id='+id,
              dataType:'json',
@@ -319,6 +330,8 @@ var t='';
              }
            });
         });
+//      Search Complete
+
 
       });
     </script>
@@ -330,9 +343,8 @@ var t='';
               dataType:'json',
               type:'GET',
               success:function(results){
-                var length=results.length;
-                //alert(length);
-            }
+                alert(results.length);
+              }
           });
        });
     </script>
@@ -356,7 +368,7 @@ var t='';
             else {
                     length=results['posts'].length;
               }
-              //alert(length);
+
               if(length==0)
               {
                   var t="No Post Found"
